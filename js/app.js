@@ -105,6 +105,7 @@ const CONTROLS = [
   ['sec-finish', 'Fade centre Y', 'finish.textFade.y', -60, 160, 1, '%'],
   ['sec-finish', 'Fade softness', 'finish.textFade.blur', 0, 30, 0.1, '%'],
   ['sec-loop', 'Duration', 'loop.duration', 4, 60, 1, 's'],
+  ['sec-video-loop', 'Loop length', 'loop.duration', 4, 60, 1, 's'],
   ['sec-loop', 'Background swing', 'loop.swing', 0, 3, 0.05, ''],
 ];
 
@@ -184,6 +185,11 @@ function buildControls() {
     input.addEventListener('input', () => {
       setPath(params, path, read());
       show(input.value);
+      // Keep other controls for the same setting (Loop length) in step.
+      for (const c of controlEls) {
+        if (c.path === path && c.input !== input) { c.input.value = input.value; c.show(input.value); }
+      }
+      if (path === 'loop.duration') updateVideoLengths();
       invalidate();
     });
     document.getElementById(sec).appendChild(row);
@@ -191,7 +197,24 @@ function buildControls() {
   }
 }
 
+// Video length options show real seconds for the current loop length.
+function videoLoops(value) {
+  if (value === 'loop') return 1;
+  if (value.startsWith('loop')) return parseInt(value.slice(4), 10);
+  return 0;
+}
+
+function updateVideoLengths() {
+  const d = params.loop.duration;
+  for (const o of document.getElementById('video-length').options) {
+    const n = videoLoops(o.value);
+    if (n === 1) o.textContent = `Full loop (${d} s)`;
+    else if (n > 1) o.textContent = `${n} loops (${n * d} s)`;
+  }
+}
+
 function syncControls() {
+  updateVideoLengths();
   const layout = params.rings.layout;
   for (const { input, path, show, kind, row } of controlEls) {
     const v = getPath(params, path);
@@ -420,7 +443,8 @@ async function doExportVideo() {
   const [w, h] = document.getElementById('video-res').value.split('x').map(Number);
   const fps = parseInt(document.getElementById('video-fps').value, 10);
   const lengthSel = document.getElementById('video-length').value;
-  const seconds = lengthSel === 'loop' ? params.loop.duration : parseFloat(lengthSel);
+  const loopCount = videoLoops(lengthSel);
+  const seconds = loopCount ? loopCount * params.loop.duration : parseFloat(lengthSel);
   const started = performance.now();
   try {
     let blob, ext;
@@ -465,8 +489,9 @@ async function doExportVideo() {
     downloadRecipeSidecar(base, { type: 'video', width: w, height: h, fps, seconds });
     const mins = ((performance.now() - started) / 60000).toFixed(1);
     const reveal = params.rings.layout === 'stack' && params.rings.assemble === 'reveal';
-    const loops = lengthSel !== 'loop' ? 'Test clip, does not loop.'
-      : reveal ? 'Ends on the mark (reveal), so it does not loop.' : 'Loops seamlessly.';
+    const loops = !loopCount ? 'Test clip, does not loop.'
+      : reveal ? (loopCount > 1 ? `Plays the reveal ${loopCount} times; a reveal does not loop.` : 'Ends on the mark (reveal), so it does not loop.')
+      : loopCount > 1 ? `${loopCount} loops (${seconds} s), loops seamlessly.` : 'Loops seamlessly.';
     status.textContent = `Done in ${mins} min. ${loops}`;
   } catch (err) {
     status.textContent = `Export failed: ${err.message}`;

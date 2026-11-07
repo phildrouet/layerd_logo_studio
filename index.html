@@ -143,13 +143,17 @@
           <option value="60">60 fps</option>
         </select>
       </div>
+      <div id="sec-video-loop"></div>
       <div class="row">
         <label for="video-length">Length</label>
         <select id="video-length">
           <option value="loop" selected>Full loop</option>
+          <option value="loop2">2 loops</option>
+          <option value="loop4">4 loops</option>
           <option value="5">5 s test clip</option>
         </select>
       </div>
+      <p class="hint">The clip length is the loop length. Whole loops repeat seamlessly; set a longer loop for a slower, longer clip.</p>
       <div class="row">
         <button id="btn-export-video" class="primary wide">Export MP4</button>
       </div>

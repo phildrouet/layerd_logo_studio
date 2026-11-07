@@ -16,7 +16,7 @@ A self-serve generator for LayerdAI brand visuals built from the Layerd mark: ri
 
 **Print-ready exports.** Size presets cover A0, A1 and A2 (portrait and landscape), roller banner 850 x 2000 mm, 4K and Full HD screens, plus fully custom sizes in mm + dpi (the tool computes the pixels) or raw pixels. Default 300 dpi. Exports are RGB PNG; give print shops the full-resolution PNG and let them handle any CMYK conversion.
 
-**Loop videos.** Rings turn whole revolutions and drift and waves run whole cycles per loop, so exported videos loop seamlessly (except Reveal, which ends on the mark by design). MP4 (H.264) at 1080p or 4K, 30 or 60 fps, encoded in the browser with WebCodecs. Browsers without WebCodecs fall back to a real-time WebM recording.
+**Loop videos.** Rings turn whole revolutions and drift and waves run whole cycles per loop, so exported videos loop seamlessly (except Reveal, which ends on the mark by design). The clip length is the loop length (Loop length in the video panel, 4 to 60 s); export one loop, two or four back to back, or a 5 s test clip. MP4 (H.264) at 1080p or 4K, 30 or 60 fps, encoded in the browser with WebCodecs. Browsers without WebCodecs fall back to a real-time WebM recording.
 
 ## Running it
 
