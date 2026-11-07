@@ -1,5 +1,5 @@
-// The LayerdAI wordmark: the brand's own lettering (vector paths taken from
-// the logo lockup, assets/layerd-wordmark.svg), placed against the mark with
+// The Layerd wordmark: the brand's own lettering (vector paths taken from
+// the logo lockup, assets/layerd-wordmark.svg; "Layerd" only, no "AI"), placed against the mark with
 // the brand lockup proportions and composited flat over the finished image.
 // Preview and video draw it in the finish shader from a texture rasterised
 // at its on-screen size; stills draw the SVG itself on the stitched canvas,
@@ -11,7 +11,7 @@ export const LOCKUP = {
   side: { cap: 0.469, gap: 0.233 },     // horizontal lockup: caps centred on the mark
   stacked: { cap: 0.357, gap: 0.189 },  // landscape lockup: centred under (or over) the mark
   markAspect: 0.934,
-  freeWidth: 0.42,                      // no mark (Ripple): wordmark width as a fraction of the frame
+  freeWidth: 0.3,                       // no mark (Ripple): wordmark width as a fraction of the frame
   fit: [0.84, 0.8],                     // a centred lockup fits within this share of the frame (w, h)
 };
 

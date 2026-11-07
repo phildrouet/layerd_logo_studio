@@ -141,7 +141,7 @@ export function defaultParams() {
       layout: 'stack', count: 3, assemble: 'loop', drift: 0.6, spin: 1, breathe: 0,
       wave: 0.22, waveLength: 3.2, cycles: 1, fadeNear: 60, fadeFar: 100,
     },
-    // The LayerdAI wordmark beside the mark (see wordmark.js): position
+    // The Layerd wordmark beside the mark (see wordmark.js): position
     // right | left | below | above; size and gap scale the brand lockup;
     // withMark fades it in as the Sphere forms the mark; centre shifts the
     // lens so mark and wordmark sit centred together.
