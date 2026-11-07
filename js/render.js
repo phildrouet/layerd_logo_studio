@@ -4,6 +4,7 @@
 // no screen-space pass, so tiled renders stitch without seams.
 
 import * as THREE from 'three';
+import { rasteriseWordmark } from './wordmark.js';
 
 const BLIT_VERT = /* glsl */`
   varying vec2 vUv;
@@ -33,11 +34,11 @@ const ADD_FRAG = /* glsl */`
   }
 `;
 
-// Finishing pass: average -> exposure + filmic curve (three's ACES fit, as
-// used by the source scene) -> sRGB -> text fade -> vignette -> grain, in
-// full-frame pixel coordinates. For tiled stills the fade, vignette and grain
+// Finishing pass: average -> exposure + filmic curve (three's ACES fit) ->
+// sRGB -> text fade -> vignette -> grain -> wordmark, in full-frame pixel
+// coordinates. For tiled stills the fade, vignette and grain
 // are applied on the stitched canvas with the same maths (export_still.js),
-// and overlaysOn is 0 here. Colours mixed after the curve are display-space
+// and overlaysOn is 0 here; stills draw the wordmark from its SVG there too. Colours mixed after the curve are display-space
 // sRGB values, set with setDisplayColour below.
 const FINISH_FRAG = /* glsl */`
   precision highp float;
@@ -54,6 +55,10 @@ const FINISH_FRAG = /* glsl */`
   uniform vec4 fade;          // centre x, centre y (fractions, y from the top), radius, blur (fractions of width)
   uniform vec3 fadeColour;
   uniform float fadeOpacity;
+  uniform sampler2D tWord;    // white wordmark, alpha = coverage
+  uniform vec4 wordRect;      // x, y (from the top), w, h in full-frame pixels
+  uniform vec3 wordColour;
+  uniform float wordOpacity;
 
   #include <tonemapping_pars_fragment>
 
@@ -88,6 +93,13 @@ const FINISH_FRAG = /* glsl */`
     float g = (hash12(px + vec2(grainSeed * 101.7, grainSeed * 57.3)) - 0.5) * 2.0;
     c += g * grainAmount;
     c += (hash12(px + vec2(7.77, grainSeed)) - 0.5) / 255.0; // dither
+    if (overlaysOn > 0.5 && wordOpacity > 0.0) {
+      vec2 q = (vec2(px.x, frameSize.y - px.y) - wordRect.xy) / wordRect.zw;
+      if (q.x >= 0.0 && q.x <= 1.0 && q.y >= 0.0 && q.y <= 1.0) {
+        float a = texture2D(tWord, vec2(q.x, 1.0 - q.y)).a;
+        c = mix(c, wordColour, a * wordOpacity);
+      }
+    }
     gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
   }
 `;
@@ -147,6 +159,10 @@ export class AccumRenderer {
         fade: { value: new THREE.Vector4() },
         fadeColour: { value: new THREE.Color() },
         fadeOpacity: { value: 0 },
+        tWord: { value: null },
+        wordRect: { value: new THREE.Vector4() },
+        wordColour: { value: new THREE.Color() },
+        wordOpacity: { value: 0 },
       },
       blending: THREE.NoBlending,
       depthTest: false,
@@ -158,6 +174,10 @@ export class AccumRenderer {
 
     this._apertureSamples = [];
     this._aaSamples = [];
+    this._lockup = null;          // wordmark lockup of the frame being rendered
+    this._wordCanvas = document.createElement('canvas');
+    this._wordTex = null;
+    this._wordSize = '';
     this._right = new THREE.Vector3();
     this._up = new THREE.Vector3();
     this._clear = new THREE.Color();
@@ -235,14 +255,23 @@ export class AccumRenderer {
     // Full-image symmetric frustum from the vertical field of view.
     const top0 = near * Math.tan(THREE.MathUtils.degToRad(p.camera.fov) / 2);
     const right0 = top0 * (frame.fullW / frame.fullH);
-    const sx = (2 * right0) / frame.fullW;  // frustum units per pixel
-    const sy = (2 * top0) / frame.fullH;
+
+    // A wordmark lockup can shift the lens (content moves by offX, offY
+    // frame fractions, so the window moves the other way) and widen it to
+    // fit (zoom). Both apply to the whole frustum, so tiles still meet.
+    this._lockup = world.lockup ? world.lockup(p, frame.fullW / frame.fullH) : null;
+    const lk = this._lockup;
+    const zoom = lk ? lk.zoom : 1;
+    const cxw = lk ? -lk.offX * 2 * right0 : 0;
+    const cyw = lk ? lk.offY * 2 * top0 : 0;
+    const R0 = right0 * zoom, T0 = top0 * zoom;
+    const zx = (2 * R0) / frame.fullW, zy = (2 * T0) / frame.fullH;
 
     // Tile window plus AA jitter, in full-image pixel coordinates.
-    let left = -right0 + (frame.x0 + jx) * sx;
-    let rightF = -right0 + (frame.x0 + frame.w + jx) * sx;
-    let top = top0 - (frame.y0 + jy) * sy;
-    let bottom = top0 - (frame.y0 + frame.h + jy) * sy;
+    let left = cxw - R0 + (frame.x0 + jx) * zx;
+    let rightF = cxw - R0 + (frame.x0 + frame.w + jx) * zx;
+    let top = cyw + T0 - (frame.y0 + jy) * zy;
+    let bottom = cyw + T0 - (frame.y0 + frame.h + jy) * zy;
 
     // Thin-lens shear: keep the focal plane fixed under the aperture offset.
     const shX = ox * near / focus;
@@ -291,10 +320,37 @@ export class AccumRenderer {
     u.frameSize.value.set(frame.fullW, frame.fullH);
     u.frameOffset.value.set(frame.x0, frame.y0);
     u.grainSeed.value = grainSeed;
+    u.wordOpacity.value = 0;
+    const lk = this._lockup;
+    if (overlays && lk && lk.rect && lk.opacity > 0) {
+      const rw = lk.rect.w * frame.fullW, rh = lk.rect.h * frame.fullH;
+      if (this._prepareWordmark(rw, rh)) {
+        u.tWord.value = this._wordTex;
+        u.wordRect.value.set(lk.rect.x * frame.fullW, lk.rect.y * frame.fullH, rw, rh);
+        setDisplayColour(u.wordColour.value, p.wordmark.color);
+        u.wordOpacity.value = lk.opacity;
+      }
+    }
     r.setRenderTarget(toCanvas ? null : this.rtRead);
     r.setViewport(0, 0, frame.w, frame.h);
     r.render(this._quadScene, this._quadCam);
     r.setRenderTarget(null);
+  }
+
+  // Rasterise the wordmark at (about) its on-screen size, once per size.
+  _prepareWordmark(w, h) {
+    const scale = Math.min(1, 4096 / Math.max(w, h, 1));
+    const cw = Math.max(2, Math.ceil(w * scale)), ch = Math.max(2, Math.ceil(h * scale));
+    const key = `${cw}x${ch}`;
+    if (key === this._wordSize && this._wordTex) return true;
+    if (!rasteriseWordmark(this._wordCanvas, cw, ch)) return false;
+    this._wordTex?.dispose();
+    this._wordTex = new THREE.CanvasTexture(this._wordCanvas);
+    this._wordTex.colorSpace = THREE.NoColorSpace;
+    this._wordTex.minFilter = THREE.LinearFilter;
+    this._wordTex.generateMipmaps = false;
+    this._wordSize = key;
+    return true;
   }
 
   readTile(w, h) {

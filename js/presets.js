@@ -23,18 +23,21 @@ export const LAYOUTS = {
   // The mark in glass: rings hinged on one axis, fanned like the logo.
   hinged: {
     label: 'Mark',
-    rings: { count: 3, spin: 1, breathe: 6, fadeNear: 14, fadeFar: 30 },
-    camera: { distance: 11, height: 0, lookAtY: 0, fov: 25 },
+    rings: { count: 3, spin: 1, breathe: 6, fadeNear: 60, fadeFar: 100 },
+    camera: { distance: 24, height: 0, lookAtY: 0, fov: 11.8 },
     rotation: { x: 12, y: 32, z: -8 },
-    optics: { focus: 11, aperture: 0.05 },
+    optics: { focus: 24, aperture: 0.08 },
   },
   // Rings as the layers of a sphere, drifting, gathering into the mark.
+  // A long lens (nearly orthographic) keeps the formed mark's ellipses
+  // symmetric, like the flat logo: close up, perspective pulls the near
+  // half of each tilted ring down and the eye loses its lids.
   stack: {
     label: 'Sphere',
-    rings: { count: 3, assemble: 'loop', drift: 0.6, spin: 1, breathe: 0, fadeNear: 14, fadeFar: 30 },
-    camera: { distance: 10, height: 0, lookAtY: 0, fov: 28 },
+    rings: { count: 3, assemble: 'loop', drift: 0.6, spin: 1, breathe: 0, fadeNear: 60, fadeFar: 100 },
+    camera: { distance: 40, height: 0, lookAtY: 0, fov: 7.1 },
     rotation: { x: 0, y: 0, z: 0 },
-    optics: { focus: 10, aperture: 0.03 },
+    optics: { focus: 40, aperture: 0.08 },
   },
   // A disc of concentric rings with a wave travelling outwards.
   ripple: {
@@ -59,13 +62,14 @@ export function applyLayout(p, name) {
 // A look is the colour and material half of a recipe. Applying one never
 // touches the layout, camera, phase or loop.
 export const LOOKS = {
-  // Dark look, first pass from the Layerd swatches: charcoal #292929,
-  // periwinkle #6371F7, lime #A6E247 (accent only), pale #EBEDF5.
+  // Dark look from the Layerd swatches: charcoal #292929, periwinkle
+  // #6371F7, lime #A6E247 (accent only), pale #EBEDF5. The glass is the
+  // brand periwinkle so the formed mark reads as the logo's solid strokes.
   hero: {
     label: 'Hero',
     glass: {
-      color: '#24274d', opacity: 0.82, reflections: 1, glintSoftness: 0.2, iridescence: 0.5,
-      faceGloss: 1, bevelBoost: 0.5, edgeTint: '#6371f7', edgeTintAmount: 0.3,
+      color: '#6371f7', opacity: 0.95, reflections: 1.2, glintSoftness: 0.2, iridescence: 0.5,
+      faceGloss: 1, bevelBoost: 0, edgeTint: '#6371f7', edgeTintAmount: 0.5,
     },
     facets: { jitter: 0, tint: 0, tintColor: '#a6e247' },
     wash: { hex: '#ebedf5', intensity: 0 },
@@ -81,6 +85,7 @@ export const LOOKS = {
     sun: { key: { color: '#ebedf5', intensity: 0.3 }, rim: { color: '#a6e247', intensity: 0.2 } },
     background: { bright: '#6371f7', mid: '#30347a', dark: '#1c1c22' },
     textFade: { color: '#161618', opacity: 0.68 },
+    wordmark: { color: '#ebedf5' },
   },
   // Light look, first pass: pale periwinkle glass on a #EBEDF5 ground.
   light: {
@@ -103,6 +108,7 @@ export const LOOKS = {
     sun: { key: { color: '#ffffff', intensity: 2.6 }, rim: { color: '#6371f7', intensity: 1.4 } },
     background: { bright: '#f6f7fb', mid: '#ebedf5', dark: '#c3c8ee' },
     textFade: { color: '#ebedf5', opacity: 0.35 },
+    wordmark: { color: '#292929' },
   },
 };
 
@@ -116,6 +122,7 @@ export function applyLook(p, name) {
   p.sun = JSON.parse(JSON.stringify(L.sun));
   Object.assign(p.background, L.background);
   Object.assign(p.finish.textFade, L.textFade);
+  p.wordmark.color = L.wordmark.color;
   return p;
 }
 
@@ -124,7 +131,7 @@ export function defaultParams() {
     version: RECIPE_VERSION,
     preset: 'hero',
     seed: 1,
-    camera: { distance: 10, height: 0, lookAtY: 0, fov: 28 },
+    camera: { distance: 40, height: 0, lookAtY: 0, fov: 7.1 },
     rotation: { x: 0, y: 0, z: 0 },
     // layout: hinged | stack | ripple (see rings.js). count: rings in the
     // mark and the stack. assemble: off | loop | reveal (stack only).
@@ -132,12 +139,20 @@ export function defaultParams() {
     // drift: how far stacked rings wander. wave, waveLength, cycles: ripple.
     rings: {
       layout: 'stack', count: 3, assemble: 'loop', drift: 0.6, spin: 1, breathe: 0,
-      wave: 0.22, waveLength: 3.2, cycles: 1, fadeNear: 14, fadeFar: 30,
+      wave: 0.22, waveLength: 3.2, cycles: 1, fadeNear: 60, fadeFar: 100,
+    },
+    // The LayerdAI wordmark beside the mark (see wordmark.js): position
+    // right | left | below | above; size and gap scale the brand lockup;
+    // withMark fades it in as the Sphere forms the mark; centre shifts the
+    // lens so mark and wordmark sit centred together.
+    wordmark: {
+      enabled: false, position: 'right', size: 1, gap: 1, color: '#ebedf5', opacity: 1,
+      withMark: true, centre: true,
     },
     phase: { time: 0 },
     background: { scale: 1.1, warp: 2, brightAmount: 1.15, vignette: 0.35 },
     // focus: depth of the rings at the frame centre ("Focus on rings").
-    optics: { focus: 10, aperture: 0.03, highlightCap: 1.6, exposure: 1.05 },
+    optics: { focus: 40, aperture: 0.08, highlightCap: 1.6, exposure: 1.05 },
     finish: {
       vignette: 0, grain: 0,
       textFade: { enabled: false, size: 88, x: 5, y: 55, blur: 12.5 },

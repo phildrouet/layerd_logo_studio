@@ -27,9 +27,13 @@ export const RINGS = {
   rows: 3,                    // tile rows across each band
   tiles: 110,                 // tiles round each ring
   extrude: 0.03, bevel: 0.009, gap: 0.006,
-  widthMin: 0.2,              // mark band width at the top and bottom of a ring
-  widthMax: 0.42,             // mark band width at the hinge
-  widthPower: 2,              // how quickly the band swells towards the hinge
+  // The mark's strokes as seen front-on, matched to the logo: hairline at
+  // the top and bottom of every ring (0.035 R), swelling into the solid mass
+  // at the hinge (0.13 R). Each ring's band is widened by its foreshortening
+  // so the front view matches whatever its tilt.
+  strokeTop: 0.07,
+  strokeSide: 0.26,
+  strokePower: 3,
   stackWidth: 0.2,            // band width while stacked or drifting
   // The mark's three ellipses (outer ring, middle band, centre lens) sit at
   // about 20, 49 and 68 degrees; other ring counts follow the same curve.
@@ -237,7 +241,7 @@ export class Rings {
         index: j, slot, tilt, y: ys[j],
         stackRadius: Math.sqrt(Math.max(0.04, R * R - ys[j] * ys[j])),
         radius: R, rows: RINGS.rows, tiles: RINGS.tiles,
-        tileWidth: RINGS.widthMax / RINGS.rows,
+        tileWidth: RINGS.strokeSide / RINGS.rows,
         extrude: RINGS.extrude, bevel: RINGS.bevel, gap: RINGS.gap,
       });
     }
@@ -282,7 +286,13 @@ export class Rings {
     const cycles = Math.max(1, Math.round(rg.cycles));
     const R = RINGS.radius;
     const { _m, _t, _r, _s, _j, _q, _e, _fc, _ft } = this;
-    const markWidth = (th) => RINGS.widthMin + (RINGS.widthMax - RINGS.widthMin) * Math.pow(Math.abs(Math.cos(th)), RINGS.widthPower);
+    // World band width at angle th (from the hinge) for a ring tilted
+    // `tilt` degrees: the logo's stroke divided by the ring's foreshortening.
+    const markWidth = (th, tilt) => {
+      const c = Math.cos(th), s = Math.sin(th), ct = Math.cos(deg(tilt));
+      const stroke = RINGS.strokeTop + (RINGS.strokeSide - RINGS.strokeTop) * Math.pow(Math.abs(c), RINGS.strokePower);
+      return stroke / Math.max(0.3, Math.sqrt(c * c + s * s * ct * ct));
+    };
 
     // Ripple surface (height and slope at radius r).
     const k = TAU / Math.max(0.2, rg.waveLength);
@@ -300,6 +310,7 @@ export class Rings {
       let turn = 0;           // in-plane rotation of the tile flow
       let a = 1;              // 0 stacked / drifting, 1 the mark
       let radius = ring.radius;
+      let tiltNow = 0;
 
       if (this.layout === 'ripple') {
         pivot.position.set(0, 0, 0);
@@ -324,6 +335,7 @@ export class Rings {
         const roll = d * deg(16) * Math.sin(TAU * u + h(3));
         const sign = Math.sign(ring.tilt) || 1;
         const markTiltNow = ring.tilt + rg.breathe * Math.sin(TAU * u + ring.slot * 2.1);
+        tiltNow = markTiltNow;
         pivot.position.set(sx, sy * (1 - a), sz);
         pivot.rotation.set(deg(lerp(sign * 90, markTiltNow, a)), 0, roll);
         radius = lerp(ring.stackRadius, R, a);
@@ -333,7 +345,7 @@ export class Rings {
       let i = 0;
       for (let kTile = 0; kTile < tiles; kTile++) {
         const th = kTile * dTheta + turn;
-        const w = this.layout === 'ripple' ? ring.tileWidth : lerp(RINGS.stackWidth, markWidth(th), a);
+        const w = this.layout === 'ripple' ? ring.tileWidth : lerp(RINGS.stackWidth, markWidth(th, tiltNow), a);
         for (let row = 0; row < rows; row++) {
           const rr = radius + (row - (rows - 1) / 2) * (w / rows);
           let hgt = 0, slope = 0;
@@ -363,7 +375,8 @@ export class Rings {
 
     // The stack leans towards the camera to show its layers, and stands
     // upright as it becomes the mark.
-    if (this.layout === 'stack') this.inner.rotation.set(deg(RINGS.stackViewTilt * (1 - meanA / n)), 0, 0);
+    this.markAmount = this.layout === 'ripple' ? 1 : meanA / n;
+    if (this.layout === 'stack') this.inner.rotation.set(deg(RINGS.stackViewTilt * (1 - this.markAmount)), 0, 0);
   }
 
   // World-space tile centres (after update), for focus and clearance.

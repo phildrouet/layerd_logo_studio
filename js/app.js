@@ -6,6 +6,7 @@ import { AccumRenderer } from './render.js';
 import { exportStill, STILL_SAMPLES } from './export_still.js';
 import { exportVideoMp4, exportVideoWebm, webCodecsAvailable, VIDEO_SAMPLES } from './export_video.js';
 import { candidates, scoreFrame } from './compose.js';
+import { loadWordmark } from './wordmark.js';
 import {
   defaultParams, applyLook, applyLayout, LAYOUTS, LIGHT_NAMES, encodeRecipe, decodeRecipe,
   STILL_FORMATS, formatPixels,
@@ -36,10 +37,10 @@ const accum = new AccumRenderer(canvas);
 // [section, label, path, min, max, step, unit] for sliders;
 // [section, label, path, 'colour'] and [section, label, path, 'toggle'].
 const CONTROLS = [
-  ['sec-camera', 'Distance', 'camera.distance', 1, 16, 0.05, ''],
+  ['sec-camera', 'Distance', 'camera.distance', 1, 60, 0.05, ''],
   ['sec-camera', 'Height', 'camera.height', -3, 4, 0.05, ''],
   ['sec-camera', 'Look down', 'camera.lookAtY', -4, 2, 0.05, ''],
-  ['sec-camera', 'Field of view', 'camera.fov', 15, 90, 1, 'deg'],
+  ['sec-camera', 'Field of view', 'camera.fov', 3, 90, 0.1, 'deg'],
   ['sec-camera', 'Rotate X', 'rotation.x', -45, 45, 0.5, 'deg'],
   ['sec-camera', 'Rotate Y', 'rotation.y', -90, 90, 0.5, 'deg'],
   ['sec-camera', 'Rotate Z', 'rotation.z', -45, 45, 0.5, 'deg'],
@@ -55,8 +56,21 @@ const CONTROLS = [
   ['sec-rings', 'Wave height', 'rings.wave', 0, 0.8, 0.01, ''],
   ['sec-rings', 'Wave length', 'rings.waveLength', 0.8, 8, 0.05, ''],
   ['sec-rings', 'Wave cycles', 'rings.cycles', 1, 4, 1, ''],
-  ['sec-rings', 'Fade start', 'rings.fadeNear', 1, 40, 0.5, ''],
-  ['sec-rings', 'Fade end', 'rings.fadeFar', 2, 60, 0.5, ''],
+  ['sec-rings', 'Fade start', 'rings.fadeNear', 1, 100, 0.5, ''],
+  ['sec-rings', 'Fade end', 'rings.fadeFar', 2, 120, 0.5, ''],
+  ['sec-wordmark', 'Show wordmark', 'wordmark.enabled', 'toggle'],
+  ['sec-wordmark', 'Position', 'wordmark.position', 'select', [
+    ['right', 'Right of the mark'],
+    ['left', 'Left of the mark'],
+    ['below', 'Below the mark'],
+    ['above', 'Above the mark'],
+  ]],
+  ['sec-wordmark', 'Size', 'wordmark.size', 0.3, 2, 0.01, ''],
+  ['sec-wordmark', 'Gap', 'wordmark.gap', 0, 3, 0.01, ''],
+  ['sec-wordmark', 'Colour', 'wordmark.color', 'colour'],
+  ['sec-wordmark', 'Opacity', 'wordmark.opacity', 0, 1, 0.01, ''],
+  ['sec-wordmark', 'Fade in with the mark', 'wordmark.withMark', 'toggle'],
+  ['sec-wordmark', 'Centre the lockup', 'wordmark.centre', 'toggle'],
   ['sec-glass', 'Colour', 'glass.color', 'colour'],
   ['sec-glass', 'Opacity', 'glass.opacity', 0, 1, 0.01, ''],
   ['sec-glass', 'Reflections', 'glass.reflections', 0, 3, 0.01, ''],
@@ -77,7 +91,7 @@ const CONTROLS = [
   ['sec-background', 'Bright amount', 'background.brightAmount', 0, 1.5, 0.01, ''],
   ['sec-background', 'Edge darkening', 'background.vignette', 0, 1, 0.01, ''],
   ['sec-background', 'Drift phase', 'phase.time', 0, 600, 0.1, ''],
-  ['sec-focus', 'Focus distance', 'optics.focus', 0.5, 30, 0.05, ''],
+  ['sec-focus', 'Focus distance', 'optics.focus', 0.5, 60, 0.05, ''],
   ['sec-focus', 'Aperture', 'optics.aperture', 0, 0.15, 0.001, ''],
   ['sec-focus', 'Highlight cap', 'optics.highlightCap', 0, 6, 0.1, ''],
   ['sec-focus', 'Exposure', 'optics.exposure', 0.3, 2.5, 0.01, ''],
@@ -118,6 +132,10 @@ const LAYOUT_ONLY = {
   'rings.wave': ['ripple'],
   'rings.waveLength': ['ripple'],
   'rings.cycles': ['ripple'],
+  'wordmark.position': ['hinged', 'stack'],
+  'wordmark.gap': ['hinged', 'stack'],
+  'wordmark.withMark': ['stack'],
+  'wordmark.centre': ['hinged', 'stack'],
 };
 
 function getPath(obj, path) {
@@ -588,3 +606,4 @@ wire();
 syncControls();
 updateStillUI();
 requestAnimationFrame(tick);
+loadWordmark().then(invalidate).catch((err) => console.warn('Wordmark not loaded', err));

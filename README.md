@@ -10,6 +10,8 @@ A self-serve generator for LayerdAI brand visuals built from the Layerd mark: ri
 - **Sphere**: the rings as the layers of a sphere, drifting. Turn on **Assembly** and the layers swing up round the shared axis and gather into the mark. *Loop* holds the mark, opens out, drifts and re-forms (seamless). *Reveal* drifts first and ends on the mark (for intros and stings). Set the number of rings to taste: 3 gives the exact logo, more gives a denser globe with the same eye.
 - **Ripple**: a wide field of concentric glass rings with a wave travelling outwards. Good for backgrounds behind copy.
 
+**The LayerdAI wordmark.** Turn on the wordmark to set the brand lettering beside the mark, to the right, left, below or above, in the brand lockup proportions. It can fade in as the Sphere forms the mark, and the framing shifts and zooms so mark and wordmark sit centred together. It is drawn from the logo's own vector paths, so stills are crisp at any print size.
+
 **Generate new compositions.** "Generate new" draws a dozen seeded compositions for the current layout (camera, rotation, light balance, layout settings), scores each one (exposure, clipping, contrast, placement, balance) and keeps the best. Two looks are built in: Hero (dark) and Light. Every composition is a deterministic recipe: copy it, keep it with the artwork, and any approved image can be re-rendered pixel for pixel at any size later. Each export also downloads a `.recipe.json` sidecar containing the full recipe.
 
 **Print-ready exports.** Size presets cover A0, A1 and A2 (portrait and landscape), roller banner 850 x 2000 mm, 4K and Full HD screens, plus fully custom sizes in mm + dpi (the tool computes the pixels) or raw pixels. Default 300 dpi. Exports are RGB PNG; give print shops the full-resolution PNG and let them handle any CMYK conversion.
@@ -41,7 +43,7 @@ Large exports take a while: expect a few minutes for A0 or the roller banner dep
 - `index.html`, `css/`, `js/` - the app, plain ES modules, no build step
 - `vendor/` - pinned dependencies (three.js 0.185.0, mp4-muxer 5.1.3), committed
 - `assets/AspektaVF.woff2` - UI font (Aspekta, OFL licensed)
-- `assets/layerd-logo.svg`, `assets/favicon.svg` - LayerdAI logo and mark
+- `assets/layerd-logo.svg`, `assets/layerd-wordmark.svg`, `assets/favicon.svg` - LayerdAI logo, wordmark and mark
 - `reference/` - gitignored local reference material (brand files)
 
 ## Deploying

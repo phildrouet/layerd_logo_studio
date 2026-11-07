@@ -1,3 +1,5 @@
+import { wordmarkImage } from './wordmark.js';
+
 // Print-resolution still export. The full frame is rendered as 2048 px tiles
 // via per-tile frustum windows, each tile converged with the same aperture
 // sample sequence, then stitched on a 2D canvas. Text fade, vignette and
@@ -52,6 +54,15 @@ export async function exportStill(world, accum, params, width, height, grainSeed
   await applyFinish(ctx, width, height, params, grainSeed, (f) => {
     onProgress?.(f, 'Applying finish');
   });
+
+  // The wordmark, drawn from its SVG at full resolution so it stays crisp.
+  const lk = world.lockup ? world.lockup(params, width / height) : null;
+  if (lk && lk.rect && lk.opacity > 0) {
+    const img = await wordmarkImage(params.wordmark.color);
+    ctx.globalAlpha = lk.opacity;
+    ctx.drawImage(img, lk.rect.x * width, lk.rect.y * height, lk.rect.w * width, lk.rect.h * height);
+    ctx.globalAlpha = 1;
+  }
 
   onProgress?.(1, 'Encoding PNG');
   await nextFrame();

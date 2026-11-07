@@ -14,13 +14,17 @@ export const GENERATE = {
   // Per-layout ranges. The mark and the sphere are objects, framed round
   // the centre; the ripple is a field, framed like a landscape.
   layouts: {
+    // Objects: distance plus the half-height of the frame at the mark, from
+    // which the field of view follows (long lenses keep the mark flat).
     hinged: {
-      camera: { distance: [9, 13], height: [-1, 1.5], lookAtY: [-0.4, 0.4], fov: [22, 34] },
+      camera: { distance: [16, 40], height: [-1, 1.5], lookAtY: [-0.4, 0.4] },
+      frameHalf: [2.3, 3.3],
       rotation: { x: [-20, 20], y: [-50, 50], z: [-15, 15] },
       rings: { breathe: [0, 10] },
     },
     stack: {
-      camera: { distance: [8.5, 12], height: [-0.6, 1.5], lookAtY: [-0.3, 0.3], fov: [24, 34] },
+      camera: { distance: [25, 45], height: [-0.6, 1.5], lookAtY: [-0.3, 0.3] },
+      frameHalf: [2.4, 3.2],
       rotation: { x: [-12, 12], y: [-40, 40], z: [-10, 10] },
       rings: { drift: [0.3, 0.9] },
     },
@@ -60,6 +64,7 @@ export function candidates(p, seed) {
     const c = JSON.parse(JSON.stringify(p));
     c.seed = seed;
     for (const k of Object.keys(L.camera)) c.camera[k] = round(pick(L.camera[k]), 2);
+    if (L.frameHalf) c.camera.fov = round(2 * Math.atan(pick(L.frameHalf) / c.camera.distance) * 180 / Math.PI, 2);
     for (const k of Object.keys(L.rotation)) c.rotation[k] = round(pick(L.rotation[k]), 1);
     for (const k of Object.keys(L.rings)) c.rings[k] = round(pick(L.rings[k]), 2);
     for (const k of Object.keys(look.lights)) {

@@ -3,7 +3,8 @@
 // applyParams poses everything for a recipe at loop phase u in [0, 1).
 
 import * as THREE from 'three';
-import { Rings } from './rings.js';
+import { Rings, RINGS } from './rings.js';
+import { lockupLayout } from './wordmark.js';
 import { StudioEnvironment } from './studio_env.js';
 import { Background } from './background.js';
 
@@ -41,6 +42,7 @@ export class LogoScene {
     this._target = new THREE.Vector3();
     this._yUp = new THREE.Vector3(0, 1, 0);
     this._m = new THREE.Matrix4();
+    this._one = new THREE.Vector3(1, 1, 1);
   }
 
   applyParams(renderer, p, u) {
@@ -86,6 +88,33 @@ export class LogoScene {
       if (r < best) { best = r; depth = d; }
     });
     return depth;
+  }
+
+  // The wordmark lockup for this frame aspect (call after applyParams):
+  // { offX, offY, rect, opacity } as frame fractions, or null when off.
+  // The mark is the projected ring sphere (its outer edge at the hinge);
+  // Ripple has no mark, so the wordmark is centred in the frame.
+  lockup(p, aspect) {
+    const wm = p.wordmark;
+    if (!wm || !wm.enabled || !(wm.opacity > 0)) return null;
+    let mark = null;
+    if (p.rings.layout !== 'ripple') {
+      const { pos, quat } = this.cameraBase(p);
+      const inv = this._m.compose(pos, quat, this._one).invert();
+      const v = this._target.set(0, 0, 0).applyMatrix4(inv);
+      const d = -v.z;
+      if (d <= 0.1) return null;
+      const tanHalf = Math.tan(THREE.MathUtils.degToRad(p.camera.fov) / 2);
+      mark = {
+        cx: (v.x / (d * tanHalf * aspect) + 1) / 2 * aspect,
+        cy: (1 - v.y / (d * tanHalf)) / 2,
+        w: (RINGS.radius + RINGS.strokeSide / 2) / (d * tanHalf),
+      };
+    }
+    const layout = lockupLayout(wm, mark, aspect);
+    if (!layout) return null;
+    const fade = wm.withMark && p.rings.layout === 'stack' ? (this.rings.markAmount ?? 1) : 1;
+    return { ...layout, opacity: wm.opacity * fade };
   }
 
   // Smallest distance from the camera to the posed rings (call after applyParams).
