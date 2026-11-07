@@ -14,7 +14,7 @@ Standalone static web tool that generates LayerdAI brand visuals from the Layerd
 
 - Swatches: charcoal `#292929`, periwinkle `#6371F7` (primary), lime `#A6E247` (accent only, sparingly: lime light in the mix tints the glass green), pale `#EBEDF5`
 - The mark: rings sharing one horizontal diameter (the hinge), tilted about 20, 49 and 68 degrees (outer ring, middle band, centre lens); strokes swell towards the hinge
-- UI font: Aspekta for now. Phil says the brand font is "grotesk" (which one still to confirm); swap the vendored UI font once known. Logo assets are cropped SVGs converted from the brand PDFs (`reference/brand/`), fills set to the brand hexes
+- Brand typeface: Lazare Grotesk (confirmed 2026-11-07 against the wordmark: "Layerd" sits between Regular and Medium, "AI" between UltraThin and Thin). The copy Phil has is the Befonts trial ("Free for Personal Use", basic Latin letters and digits only, no `( ) : % /`), so it must not be committed, deployed or traced into assets here. Use it only once there is a commercial web licence, and then only with the repo private (a font file in a public repo is redistribution). Until then the UI font stays Aspekta (OFL). Exports carry no typeset text: the wordmark is the logo's own artwork. Logo assets are cropped SVGs converted from the brand PDFs (`reference/brand/`), fills set to the brand hexes
 - Lockups (measured from the brand PNGs, as fractions of the mark's width): horizontal, cap height 0.469, gap 0.233, caps centred on the mark; landscape (stacked), cap height 0.357, gap 0.189, centred under the mark. The mark is 0.934 times as tall as wide
 
 ## House rules
