@@ -7,7 +7,7 @@ Context file for Claude Code sessions on any workstation. Keep it updated when d
 Standalone static web tool that generates LayerdAI brand visuals from the Layerd mark (glass rings) as print-resolution stills and seamless loop videos, each from a deterministic recipe.
 
 - Repo: https://github.com/phildrouet/layerd_logo_studio (owner phildrouet; public for now, may go private)
-- Deploy: Netlify, no build command, publish directory `/`; pushes to `main` deploy
+- Deploy: Netlify site `layerdlogostudio` (https://layerdlogostudio.netlify.app, id `5ee8b706-15ea-4f63-bcf6-e9dc799146e3`), git-linked through the Netlify GitHub App, no build command, publish directory `.`, only `main` builds; pushes to `main` deploy. `netlify.toml` sends `X-Robots-Tag: noindex`; `reference/` is never deployed (gitignored)
 - This repo is independent: never reference other projects or repos in it
 
 ## Brand

@@ -48,4 +48,4 @@ Large exports take a while: expect a few minutes for A0 or the roller banner dep
 
 ## Deploying
 
-Netlify: new site from Git, no build command, publish directory `/`. See `netlify.toml`.
+Live at https://layerdlogostudio.netlify.app (noindex). Netlify builds from `main` on every push: no build command, publish directory `/`. See `netlify.toml`.
