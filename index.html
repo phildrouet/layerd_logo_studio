@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Layerd Logo Studio</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="css/studio.css">
+<script type="importmap">
+  { "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">
+    <img class="logo" src="assets/layerd-logo.svg" alt="LayerdAI" width="106" height="25">
+    <span class="divider" aria-hidden="true"></span>
+    <h1>Logo Studio</h1>
+    <span class="tag">Brand visual generator</span>
+  </div>
+  <div class="top-actions">
+    <button id="btn-generate" class="primary">Generate new</button>
+    <div class="preset-switch" role="group" aria-label="Layout">
+      <button id="layout-hinged" title="The mark in glass: rings hinged on one axis">Mark</button>
+      <button id="layout-stack" class="on" title="Rings as the layers of a sphere, drifting and gathering into the mark">Sphere</button>
+      <button id="layout-ripple" title="A field of concentric rings with a travelling wave">Ripple</button>
+    </div>
+    <div class="preset-switch" role="group" aria-label="Look">
+      <button id="preset-hero" class="on">Hero</button>
+      <button id="preset-light">Light</button>
+    </div>
+    <button id="btn-play" title="Play or pause the loop">Play</button>
+  </div>
+</header>
+
+<main>
+  <section id="stage">
+    <div id="canvas-wrap"><canvas id="view"></canvas></div>
+    <div id="stage-status">
+      <span id="status-samples"></span>
+      <span id="status-time"></span>
+    </div>
+  </section>
+
+  <aside id="panel">
+    <details open>
+      <summary>Composition</summary>
+      <div class="row">
+        <label for="seed">Seed</label>
+        <input type="number" id="seed" min="1" max="999999" step="1" value="1">
+        <button id="btn-reseed" class="mini" title="New random seed">Dice</button>
+      </div>
+      <div class="row recipe-row">
+        <button id="btn-copy-recipe">Copy recipe</button>
+        <button id="btn-load-recipe">Load recipe</button>
+      </div>
+      <p class="hint">Every image comes from a recipe. Copy it, keep it with the artwork, and any approved composition can be re-rendered pixel for pixel at any size later.</p>
+      <div id="recipe-loader" hidden>
+        <textarea id="recipe-text" rows="4" placeholder="Paste a recipe here"></textarea>
+        <div class="row">
+          <button id="btn-apply-recipe" class="primary">Apply</button>
+          <button id="btn-cancel-recipe">Cancel</button>
+        </div>
+      </div>
+    </details>
+
+    <details open><summary>Camera</summary><div id="sec-camera"></div></details>
+    <details open><summary>Rings</summary><div id="sec-rings"></div></details>
+    <details><summary>Glass</summary>
+      <div id="sec-glass"></div>
+      <div class="row"><button id="btn-reset-look" class="mini">Reset to approved look</button></div>
+    </details>
+    <details><summary>Lighting</summary><div id="sec-lighting"></div></details>
+    <details><summary>Background</summary><div id="sec-background"></div></details>
+    <details><summary>Focus</summary>
+      <div id="sec-focus"></div>
+      <div class="row"><button id="btn-focus-band" class="mini">Focus on rings</button></div>
+    </details>
+    <details><summary>Finish</summary><div id="sec-finish"></div></details>
+    <details><summary>Loop</summary>
+      <div id="sec-loop"></div>
+      <div class="row">
+        <label for="scrub">Time</label>
+        <input type="range" id="scrub" min="0" max="1" step="0.001" value="0">
+      </div>
+    </details>
+
+    <details open class="export-block">
+      <summary>Export still</summary>
+      <div class="row">
+        <label for="still-format">Format</label>
+        <select id="still-format"></select>
+      </div>
+      <div class="row" id="row-orientation">
+        <label>Orientation</label>
+        <div class="preset-switch">
+          <button id="orient-landscape" class="on">Landscape</button>
+          <button id="orient-portrait">Portrait</button>
+        </div>
+      </div>
+      <div class="row" id="row-dpi">
+        <label for="still-dpi">Resolution</label>
+        <select id="still-dpi">
+          <option value="300" selected>300 dpi</option>
+          <option value="150">150 dpi</option>
+          <option value="72">72 dpi</option>
+        </select>
+      </div>
+      <div class="row" id="row-custom-mm" hidden>
+        <label>Size mm</label>
+        <input type="number" id="custom-mm-w" value="600" min="10" max="5000"> x
+        <input type="number" id="custom-mm-h" value="400" min="10" max="5000">
+      </div>
+      <div class="row" id="row-custom-px" hidden>
+        <label>Size px</label>
+        <input type="number" id="custom-px-w" value="4096" min="16" max="23000"> x
+        <input type="number" id="custom-px-h" value="2730" min="16" max="23000">
+      </div>
+      <p class="hint" id="still-size-note"></p>
+      <div class="row">
+        <button id="btn-export-still" class="primary wide">Export PNG</button>
+      </div>
+      <progress id="still-progress" max="1" value="0" hidden></progress>
+      <p class="hint" id="still-status"></p>
+      <p class="hint">Exports are RGB PNG with a recipe file alongside. Give print shops the full resolution PNG and let them handle any CMYK conversion.</p>
+    </details>
+
+    <details open class="export-block">
+      <summary>Export video</summary>
+      <div class="row">
+        <label for="video-res">Size</label>
+        <select id="video-res">
+          <option value="1920x1080" selected>1080p</option>
+          <option value="3840x2160">4K</option>
+        </select>
+        <select id="video-fps">
+          <option value="30" selected>30 fps</option>
+          <option value="60">60 fps</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="video-length">Length</label>
+        <select id="video-length">
+          <option value="loop" selected>Full loop</option>
+          <option value="5">5 s test clip</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="btn-export-video" class="primary wide">Export MP4</button>
+      </div>
+      <progress id="video-progress" max="1" value="0" hidden></progress>
+      <p class="hint" id="video-status"></p>
+    </details>
+  </aside>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

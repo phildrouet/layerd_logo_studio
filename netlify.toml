@@ -1,0 +1,9 @@
+# Layerd Logo Studio: static site, no build step. Publish the repo root.
+# noindex: an internal tool, keep it out of search engines.
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
