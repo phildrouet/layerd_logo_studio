@@ -72,6 +72,9 @@ export const LOOKS = {
       faceGloss: 1, bevelBoost: 0, edgeTint: '#6371f7', edgeTintAmount: 0.5,
     },
     facets: { jitter: 0, tint: 0, tintColor: '#a6e247' },
+    // Glass ribbon surface: a nearly clear body; reflections, edges and
+    // iridescence carry it (see RIBBON_OUT in rings.js).
+    ribbon: { color: '#c9cefc', opacity: 0.18, edge: 0.9, iridescence: 1 },
     wash: { hex: '#ebedf5', intensity: 0 },
     lights: {
       key: { hex: '#6371f7', intensity: 12, opacity: 1 },
@@ -95,6 +98,7 @@ export const LOOKS = {
       faceGloss: 0.6, bevelBoost: 3, edgeTint: '#6371f7', edgeTintAmount: 0.8,
     },
     facets: { jitter: 0, tint: 0, tintColor: '#a6e247' },
+    ribbon: { color: '#9aa4f5', opacity: 0.35, edge: 1, iridescence: 1 },
     wash: { hex: '#ffffff', intensity: 0.1 },
     lights: {
       key: { hex: '#6371f7', intensity: 14, opacity: 1 },
@@ -117,6 +121,7 @@ export function applyLook(p, name) {
   p.preset = name;
   p.glass = { ...L.glass };
   p.facets = { ...L.facets };
+  p.ribbon = { ...L.ribbon };
   p.wash = { ...L.wash };
   p.lights = JSON.parse(JSON.stringify(L.lights));
   p.sun = JSON.parse(JSON.stringify(L.sun));
@@ -137,9 +142,12 @@ export function defaultParams() {
     // mark and the stack. assemble: off | loop | reveal (stack only).
     // spin: whole turns per loop. breathe: degrees the mark's fan swings.
     // drift: how far stacked rings wander. wave, waveLength, cycles: ripple.
+    // surface: tiles (bevelled glass tiles) | ribbon (one continuous glass
+    // band per ring, ribbonThickness deep). Layouts leave the surface alone.
     rings: {
       layout: 'stack', count: 3, assemble: 'loop', drift: 0.6, spin: 1, breathe: 0,
       wave: 0.22, waveLength: 3.2, cycles: 1, fadeNear: 60, fadeFar: 100,
+      surface: 'tiles', ribbonThickness: 0.05,
     },
     // The Layerd wordmark beside the mark (see wordmark.js): position
     // right | left | below | above; size and gap scale the brand lockup;

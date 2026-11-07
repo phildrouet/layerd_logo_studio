@@ -10,6 +10,8 @@ A self-serve generator for Layerd brand visuals built from the Layerd mark: ring
 - **Sphere**: the rings as the layers of a sphere, drifting. Turn on **Assembly** and the layers swing up round the shared axis and gather into the mark. *Loop* holds the mark, opens out, drifts and re-forms (seamless). *Reveal* drifts first and ends on the mark (for intros and stings). Set the number of rings to taste: 3 gives the exact logo, more gives a denser globe with the same eye.
 - **Ripple**: a wide field of concentric glass rings with a wave travelling outwards. Good for backgrounds behind copy.
 
+**Glass tiles or glass ribbon.** Every layout can be drawn as bevelled glass tiles or as smooth glass ribbons (Rings > Surface). The ribbon is clear glass: set its opacity from nearly invisible to solid, how strongly its edges catch the light, how much rainbow fringe they carry, its colour and its thickness.
+
 **The Layerd wordmark.** Turn on the wordmark to set the brand lettering beside the mark, to the right, left, below or above, in the brand lockup proportions. It can fade in as the Sphere forms the mark, and the framing shifts and zooms so mark and wordmark sit centred together. It is drawn from the logo's own vector paths, so stills are crisp at any print size.
 
 **Generate new compositions.** "Generate new" draws a dozen seeded compositions for the current layout (camera, rotation, light balance, layout settings), scores each one (exposure, clipping, contrast, placement, balance) and keeps the best. Two looks are built in: Hero (dark) and Light. Every composition is a deterministic recipe: copy it, keep it with the artwork, and any approved image can be re-rendered pixel for pixel at any size later. Each export also downloads a `.recipe.json` sidecar containing the full recipe.
@@ -30,7 +32,7 @@ then open http://localhost:8091. Everything (three.js, the MP4 muxer, the Aspekt
 
 ## How it works
 
-- Each ring is a band of bevelled glass tiles (annular sectors), one `InstancedMesh` per ring, re-posed every frame. In the mark, bands swell towards the shared axis like the logo's strokes.
+- Each ring is a band of bevelled glass tiles (annular sectors), one `InstancedMesh` per ring, re-posed every frame. In the mark, bands swell towards the shared axis like the logo's strokes. In ribbon mode each band is instead one smooth swept cross-section, re-built every frame from the same pose and drawn back to front as clear glass.
 - Reflections come from a PMREM-baked studio of seven soft coloured light planes; two directional lights add sharp glints. The background is a domain-warped noise gradient on a sphere inside the scene.
 - Depth of field is accumulation based: the camera jitters across an aperture disc with the frustum sheared so the focal plane stays fixed, and passes are averaged. This is resolution independent, so tiled renders never seam.
 - Stills render as 2048 px tiles via per-tile frustum windows, stitched on a canvas; the optional text fade (a soft dark area behind copy), vignette and grain are applied after stitching in full-frame coordinates.

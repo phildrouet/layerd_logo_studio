@@ -51,6 +51,9 @@ export class LogoScene {
     this.background.apply(p, time);
     this.rings.applyLook(p);
     this.rings.update(p, u);
+    // The glass ribbon is sorted once per frame from the un-jittered camera
+    // (the aperture offsets are far too small to change the order).
+    this.rings.sortRibbon(this.cameraBase(p).pos);
     this.keyLight.color.set(p.sun.key.color);
     this.keyLight.intensity = p.sun.key.intensity;
     this.rimLight.color.set(p.sun.rim.color);

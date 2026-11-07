@@ -18,6 +18,10 @@ const BLIT_VERT = /* glsl */`
 // compresses linear HDR values above `cap` before they are averaged, so a
 // defocused specular spreads as a soft disc rather than a glowing blob (the
 // physical counterpart of a highlight clamp before a blur). 0 = off.
+// Bad samples are sanitised first: three's thin-film iridescence now and
+// then returns a large negative (or NaN) channel at grazing angles, and one
+// such sample turned the pixel's whole average into a black or pure-blue
+// speck. Negative channels clamp to 0; NaN or infinite samples are dropped.
 const ADD_FRAG = /* glsl */`
   precision highp float;
   varying vec2 vUv;
@@ -26,6 +30,7 @@ const ADD_FRAG = /* glsl */`
   uniform float cap;
   void main() {
     vec3 c = texture2D(tSrc, vUv).rgb;
+    c = (any(isnan(c)) || any(isinf(c))) ? vec3(0.0) : max(c, vec3(0.0));
     if (cap > 0.0) {
       float m = max(c.r, max(c.g, c.b));
       if (m > cap) c *= (cap + (m - cap) / (1.0 + (m - cap) / cap)) / m;

@@ -44,6 +44,11 @@ const CONTROLS = [
   ['sec-camera', 'Rotate X', 'rotation.x', -45, 45, 0.5, 'deg'],
   ['sec-camera', 'Rotate Y', 'rotation.y', -90, 90, 0.5, 'deg'],
   ['sec-camera', 'Rotate Z', 'rotation.z', -45, 45, 0.5, 'deg'],
+  ['sec-rings', 'Surface', 'rings.surface', 'select', [
+    ['tiles', 'Glass tiles'],
+    ['ribbon', 'Glass ribbon'],
+  ]],
+  ['sec-rings', 'Ribbon thickness', 'rings.ribbonThickness', 0.01, 0.2, 0.005, ''],
   ['sec-rings', 'Rings', 'rings.count', 1, 15, 1, ''],
   ['sec-rings', 'Assembly', 'rings.assemble', 'select', [
     ['off', 'Off (drift only)'],
@@ -73,6 +78,10 @@ const CONTROLS = [
   ['sec-wordmark', 'Centre the lockup', 'wordmark.centre', 'toggle'],
   ['sec-glass', 'Colour', 'glass.color', 'colour'],
   ['sec-glass', 'Opacity', 'glass.opacity', 0, 1, 0.01, ''],
+  ['sec-glass', 'Ribbon colour', 'ribbon.color', 'colour'],
+  ['sec-glass', 'Ribbon opacity', 'ribbon.opacity', 0, 1, 0.01, ''],
+  ['sec-glass', 'Edge shine', 'ribbon.edge', 0, 1.5, 0.01, ''],
+  ['sec-glass', 'Ribbon iridescence', 'ribbon.iridescence', 0, 1, 0.01, ''],
   ['sec-glass', 'Reflections', 'glass.reflections', 0, 3, 0.01, ''],
   ['sec-glass', 'Glint softness', 'glass.glintSoftness', 0.02, 0.6, 0.01, ''],
   ['sec-glass', 'Iridescence', 'glass.iridescence', 0, 1, 0.01, ''],
@@ -139,6 +148,25 @@ const LAYOUT_ONLY = {
   'wordmark.centre': ['hinged', 'stack'],
 };
 
+// Controls that only apply to one surface. A smooth ribbon looks the same
+// however far it turns, so Turns per loop is a tiles-only control.
+const SURFACE_ONLY = {
+  'rings.ribbonThickness': 'ribbon',
+  'ribbon.color': 'ribbon',
+  'ribbon.opacity': 'ribbon',
+  'ribbon.edge': 'ribbon',
+  'ribbon.iridescence': 'ribbon',
+  'rings.spin': 'tiles',
+  'glass.color': 'tiles',
+  'glass.opacity': 'tiles',
+  'glass.iridescence': 'tiles',
+  'glass.faceGloss': 'tiles',
+  'glass.bevelBoost': 'tiles',
+  'facets.jitter': 'tiles',
+  'facets.tint': 'tiles',
+  'facets.tintColor': 'tiles',
+};
+
 function getPath(obj, path) {
   return path.split('.').reduce((o, k) => o[k], obj);
 }
@@ -190,6 +218,7 @@ function buildControls() {
         if (c.path === path && c.input !== input) { c.input.value = input.value; c.show(input.value); }
       }
       if (path === 'loop.duration') updateVideoLengths();
+      if (path === 'rings.surface') syncControls();
       invalidate();
     });
     document.getElementById(sec).appendChild(row);
@@ -216,12 +245,14 @@ function updateVideoLengths() {
 function syncControls() {
   updateVideoLengths();
   const layout = params.rings.layout;
+  const surface = params.rings.surface === 'ribbon' ? 'ribbon' : 'tiles';
   for (const { input, path, show, kind, row } of controlEls) {
     const v = getPath(params, path);
     if (kind === 'toggle') input.checked = !!v;
     else input.value = v;
     show(v);
-    row.hidden = !!LAYOUT_ONLY[path] && !LAYOUT_ONLY[path].includes(layout);
+    row.hidden = (!!LAYOUT_ONLY[path] && !LAYOUT_ONLY[path].includes(layout))
+      || (!!SURFACE_ONLY[path] && SURFACE_ONLY[path] !== surface);
   }
   document.getElementById('seed').value = params.seed;
   document.getElementById('preset-hero').classList.toggle('on', params.preset === 'hero');
