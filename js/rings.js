@@ -270,6 +270,14 @@ export class Rings {
     const inst = new THREE.InstancedMesh(geo, mat, count);
     inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     inst.frustumCulled = false;
+    // three sorts transparent meshes by their bounding sphere's centre, and
+    // an InstancedMesh computes that sphere once, from whatever pose its
+    // tiles had the first time it was drawn, then caches it. That made the
+    // draw order of overlapping rings depend on preview history. A fixed
+    // sphere round the ring's own centre keeps the order a function of the
+    // recipe and u alone: rings sharing a centre (Mark, Ripple) draw in ring
+    // order, drifting Sphere layers by the depth of their centres.
+    inst.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), spec.radius + spec.tileWidth * spec.rows + 0.5);
     for (let k = 0; k < count; k++) inst.setColorAt(k, new THREE.Color(1, 1, 1));
     const pivot = new THREE.Object3D();
     pivot.rotation.order = 'ZYX';       // tilt about the hinge first, then the drift roll
